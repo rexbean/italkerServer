@@ -1,5 +1,6 @@
 package net.rex.italker.web.push.service;
 
+import com.google.common.base.Strings;
 import net.rex.italker.web.push.bean.api.account.AccountRspModel;
 import net.rex.italker.web.push.bean.api.account.LoginModel;
 import net.rex.italker.web.push.bean.api.account.RegisterModel;
@@ -37,6 +38,31 @@ public class AccountService {
 
 
     }
+
+    @POST
+    @Path("/bind/{pushId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    // get the token from the request header
+    // get pushId from url
+    public ResponseModel<AccountRspModel> bind(@HeaderParam("token") String token,
+                                               @PathParam("pushId") String pushId) {
+
+        if(Strings.isNullOrEmpty(token)||
+                Strings.isNullOrEmpty(pushId)){
+            return ResponseModel.buildParameterError();
+        }
+
+        // get user using token
+        User user = UserFactory.findByToken(token);
+
+        if(user != null){
+
+        }
+        return null;
+
+    }
+
 
     @POST
     @Path("/register")

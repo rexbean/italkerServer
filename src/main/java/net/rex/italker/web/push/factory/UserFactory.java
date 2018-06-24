@@ -1,10 +1,12 @@
 package net.rex.italker.web.push.factory;
 
+import com.google.common.base.Strings;
 import net.rex.italker.web.push.bean.db.User;
 import net.rex.italker.web.push.utils.Hib;
 import net.rex.italker.web.push.utils.TextUtil;
 import org.hibernate.Session;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -110,5 +112,45 @@ public class UserFactory {
         pwd = pwd.trim();
         pwd = TextUtil.getMD5(pwd);
         return TextUtil.encodeBase64(pwd);
+    }
+
+    /**
+     * bind pushId to current user
+     * @param user user
+     * @param pushId pushId
+     * @return user
+     */
+    public static User bindPushId(User user, String pushId){
+        // find whether there is other device bind to this pushId
+        // cancel bind
+        // the result list won't contain itself
+        Hib.query(session->{
+            @SuppressWarnings("unchecked")
+            List<User> userList = (List<User>)session.createQuery(
+                    "from User where lower(pushId)=:pushId and id!=:userId")
+                    .setParameter("pushId",pushId.toLowerCase())
+                    .setParameter("userId",user.getId())
+                    .list();
+            for(User u: userList){
+                u.setPushId(null);
+                session.saveOrUpdate(u);
+            }
+        });
+
+        // if bind before then return
+        if(pushId.equalsIgnoreCase(user.getPushId())){
+            return user;
+        } else {
+            // if pushId different
+            // send a message to that device to quit
+            if(Strings.isNullOrEmpty(user.getPushId())){
+
+            }
+            user.setPushId(pushId);
+            return Hib.query(session->{
+                session.saveOrUpdate(user);
+                return user;
+            });
+        }
     }
 }
